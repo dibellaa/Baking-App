@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">BakinApp</string>
+
+    <string name="recipe_list_load_failed">Recipes list load failed!</string>
+    <string name="recipe_image_description">Recipe image</string>
+    <string name="no_connection_msg">No network connection detected.</string>
+    <string name="error_message">Any recipe details to show</string>
+    <string name="ingredients_label">Ingredients</string>
+    <string name="add_to_widget">Add to widget</string>
+    <string name="remove_from_widget">Remove from widget</string>
+    <string name="appwidget_text">No ingredients available</string>
+    <string name="add_widget">Add widget</string>
+    <string name="recipes_in_the_widget">Recipes in the widget</string>
+</resources>
