@@ -11,6 +11,8 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.widget.TextView;
 
 import com.example.adibella.bakinapp.MainActivity;
 import com.example.adibella.bakinapp.R;
@@ -22,6 +24,8 @@ import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import timber.log.Timber;
 
 public class BakinAppWidgetConfigureActivity extends AppCompatActivity implements RecipeListAdapter.OnRecipeClickListener {
@@ -43,6 +47,15 @@ public class BakinAppWidgetConfigureActivity extends AppCompatActivity implement
     private RecipeListAdapter recipeListAdapter;
     private List<Recipe> recipes;
 
+    @BindView(R.id.widget_error_message)
+    TextView errorMessage;
+
+    @BindView(R.id.recipes_in_the_widget_label)
+    TextView label;
+
+    @BindView(R.id.recipes_list_view)
+    RecyclerView recyclerView;
+
     public BakinAppWidgetConfigureActivity() {
         super();
     }
@@ -52,8 +65,10 @@ public class BakinAppWidgetConfigureActivity extends AppCompatActivity implement
         super.onCreate(savedInstanceState);
         setResult(RESULT_CANCELED);
         setContentView(R.layout.bakin_app_widget_provider_configure);
+        ButterKnife.bind(this);
 
-        RecyclerView recyclerView = findViewById(R.id.recipes_list_view);
+        loadLabel();
+
         GridLayoutManager layoutManager = new GridLayoutManager(this, MainActivity.numberOfColumns(this));
         recyclerView.setLayoutManager(layoutManager);
         recipeListAdapter = new RecipeListAdapter(R.layout.recipe_list_item,this, this, new ArrayList<Recipe>());
@@ -70,6 +85,11 @@ public class BakinAppWidgetConfigureActivity extends AppCompatActivity implement
         }
 
         loadRecipes();
+    }
+
+    private void loadLabel() {
+        errorMessage.setVisibility(View.INVISIBLE);
+        label.setVisibility(View.VISIBLE);
     }
 
     private void loadRecipes() {
@@ -100,10 +120,17 @@ public class BakinAppWidgetConfigureActivity extends AppCompatActivity implement
                     recipes.add(recipe);
                 }
                 recipeListAdapter.setRecipes(recipes);
+            } else {
+                loadErrorMessage();
             }
             cursor.close();
         }
         Timber.d("Cursor is null");
+    }
+
+    private void loadErrorMessage() {
+        errorMessage.setVisibility(View.VISIBLE);
+        label.setVisibility(View.INVISIBLE);
     }
 
     @Override

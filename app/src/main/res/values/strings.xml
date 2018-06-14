@@ -11,4 +11,5 @@
     <string name="appwidget_text">No ingredients available</string>
     <string name="add_widget">Add widget</string>
     <string name="recipes_in_the_widget">Recipes in the widget</string>
+    <string name="widget_error_message">To add recipes in the widget:\n- Open a recipe\n- Click the settings tab\n- Click on Add to widget</string>
 </resources>

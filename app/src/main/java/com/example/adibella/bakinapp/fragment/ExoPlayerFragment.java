@@ -1,5 +1,6 @@
 package com.example.adibella.bakinapp.fragment;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.adibella.bakinapp.R;
+import com.example.adibella.bakinapp.util.NetworkUtils;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
@@ -36,6 +38,7 @@ import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -88,7 +91,7 @@ public class ExoPlayerFragment extends Fragment implements Player.EventListener 
                     .load(thumbnailUrl)
                     .into(target);
         } else {
-            playerView.setDefaultArtwork(BitmapFactory.decodeResource(getResources(), R.drawable.default_image));
+            setPlayerDefaultArt();
         }
 
         playerInit(Uri.parse(mediaUrl));
@@ -98,26 +101,29 @@ public class ExoPlayerFragment extends Fragment implements Player.EventListener 
 
     private void playerInit(Uri mediaUri) {
         if (simpleExoPlayer == null) {
-            Handler handler = new Handler();
             BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
             TrackSelection.Factory factory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
             TrackSelector trackSelector = new DefaultTrackSelector(factory);
-
             simpleExoPlayer = ExoPlayerFactory.newSimpleInstance(getContext(), trackSelector);
-
             playerView.setPlayer(simpleExoPlayer);
-
             simpleExoPlayer.addListener(this);
+            MediaSource mediaSource = buildMediaSource(getContext(), mediaUri);
+            simpleExoPlayer.prepare(mediaSource, true, false);
             simpleExoPlayer.setPlayWhenReady(shouldAutoPlay);
+            simpleExoPlayer.seekTo(resumePosition);
+        } else {
+            MediaSource mediaSource = buildMediaSource(getContext(),mediaUri);
+            simpleExoPlayer.prepare(mediaSource, true, false);
+            simpleExoPlayer.setPlayWhenReady(shouldAutoPlay);
+            simpleExoPlayer.seekTo(resumePosition);
         }
+    }
+
+    private MediaSource buildMediaSource(Context context, Uri uri) {
         String userAgent = Util.getUserAgent(getContext(), "BakinApp");
-        MediaSource mediaSource = new ExtractorMediaSource(mediaUri, new DefaultDataSourceFactory(
-                getContext(), userAgent), new DefaultExtractorsFactory(), null, null);
-        boolean haveResumePos = (resumeWindow != C.INDEX_UNSET);
-        if (haveResumePos) {
-            simpleExoPlayer.seekTo(resumeWindow, resumePosition);
-        }
-        simpleExoPlayer.prepare(mediaSource, !haveResumePos, false);
+        MediaSource mediaSource = new ExtractorMediaSource(uri, new DefaultDataSourceFactory(
+                context, userAgent), new DefaultExtractorsFactory(), null, null);
+        return mediaSource;
     }
 
     private void playerFree() {
@@ -173,8 +179,10 @@ public class ExoPlayerFragment extends Fragment implements Player.EventListener 
     @Override
     public void onResume() {
         super.onResume();
-        if (Util.SDK_INT <= SDK_VERSION) {
-            if (!TextUtils.isEmpty(mediaUrl)) {
+        if (!TextUtils.isEmpty(mediaUrl)) {
+            if (simpleExoPlayer != null) {
+                simpleExoPlayer.seekTo(resumePosition);
+            } else {
                 playerInit(Uri.parse(mediaUrl));
             }
         }
@@ -198,6 +206,12 @@ public class ExoPlayerFragment extends Fragment implements Player.EventListener 
         }
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        playerFree();
+    }
+
     Target target = new Target() {
         @Override
         public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
@@ -206,7 +220,7 @@ public class ExoPlayerFragment extends Fragment implements Player.EventListener 
 
         @Override
         public void onBitmapFailed(Drawable errorDrawable) {
-            playerView.setDefaultArtwork(BitmapFactory.decodeResource(getResources(), R.drawable.default_image));
+            setPlayerDefaultArt();
         }
 
         @Override
@@ -214,6 +228,10 @@ public class ExoPlayerFragment extends Fragment implements Player.EventListener 
 
         }
     };
+
+    private void setPlayerDefaultArt() {
+        playerView.setDefaultArtwork(BitmapFactory.decodeResource(getResources(), R.drawable.default_image));
+    }
 
     @Override
     public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
